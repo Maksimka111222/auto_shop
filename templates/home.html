@@ -3,42 +3,74 @@
 {% block title %}Головна{% endblock %}
 
 {% block content %}
-<h1 class="text-3xl font-bold mb-4">MOTOREX</h1>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div>
-        <img
-            src="https://picsum.photos/id/180/800/600"
-            alt="Ілюстративне фото"
-            class="w-full rounded-lg shadow-md"
-        />
+<!-- Головний банер: фото на всю ширину з текстом поверх -->
+<section class="relative rounded-2xl overflow-hidden shadow-lg">
+    <img
+        src="{{ url_for('static', filename='img/mercedes-cls.jpg') }}"
+        alt="Mercedes-AMG CLS 53"
+        class="w-full h-72 md:h-[28rem] object-cover"
+    />
+    <div class="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent"></div>
+    <div class="absolute inset-0 flex flex-col justify-center p-6 md:p-12 max-w-xl">
+        <p class="text-red-400 font-semibold uppercase tracking-widest text-sm mb-2">Онлайн-автосалон</p>
+        <h1 class="text-white text-3xl md:text-5xl font-extrabold mb-4">
+            MOTOREX — автомобілі для вашого ритму життя
+        </h1>
+        <p class="text-zinc-200 text-base md:text-lg">
+            Комфорт, надійність і свобода вибору — від міського хетчбека до бізнес-седана.
+        </p>
     </div>
-    <div>
-        <p class="text-lg mb-4"> 
-        MOTOREX — це сучасний онлайн-автосалон, створений для тих, хто цінує комфорт, надійність і свободу вибору.
-        </p>
+</section>
 
-        <p class="text-lg mb-4">
-            Ми об'єднуємо широкий вибір автомобілів різних марок, моделей і класів, щоб кожен міг знайти транспорт, який відповідатиме його стилю життя та потребам.
-        </p>       
+<!-- Вступ -->
+<section class="mt-10 max-w-3xl">
+    <h2 class="text-2xl font-bold mb-3">Хто ми</h2>
+    <p class="text-lg mb-3">
+        MOTOREX — це сучасний онлайн-автосалон, створений для тих, хто цінує комфорт,
+        надійність і свободу вибору.
+    </p>
+    <p class="text-lg">
+        Ми об'єднуємо автомобілі різних марок, моделей і класів, щоб кожен міг знайти
+        транспорт, який відповідатиме його стилю життя та потребам.
+    </p>
+</section>
 
-        <p class="text-lg mb-4">
-            Наша мета — зробити процес вибору автомобіля простим, зручним і приємним.
-        </p>
-
-        <p class="text-lg mb-4">
-            Ми прагнемо забезпечити якісний сервіс, прозору інформацію про кожен автомобіль та комфортну взаємодію з клієнтами.
-        </p>
-
-        <p class="text-lg mb-4">
-            MOTOREX — більше, ніж автомобілі. Це нові можливості, враження та свобода руху.
-        </p>
-
-        <p class="text-lg mb-4">
-            Обирайте свій автомобіль. Відкривайте нові горизонти разом із нами!
-        </p>
-
+<!-- Три переваги: одна колонка на телефоні, три на широкому екрані -->
+<section class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-white rounded-xl shadow p-6 border-t-4 border-red-600">
+        <h3 class="text-xl font-bold mb-2">Різні класи авто</h3>
+        <p>Хетчбеки, ліфтбеки й седани — для міста, сім'ї та далеких поїздок.</p>
     </div>
+    <div class="bg-white rounded-xl shadow p-6 border-t-4 border-red-600">
+        <h3 class="text-xl font-bold mb-2">Зрозумілий опис</h3>
+        <p>Основні характеристики кожної моделі подані коротко й без зайвих термінів.</p>
     </div>
-        
-      
+    <div class="bg-white rounded-xl shadow p-6 border-t-4 border-red-600">
+        <h3 class="text-xl font-bold mb-2">Допомога з вибором</h3>
+        <p>Підкажемо, яке авто краще відповідає вашому бюджету та способу життя.</p>
+    </div>
+</section>
+
+<!-- Короткий анонс асортименту -->
+<section class="mt-12">
+    <h2 class="text-2xl font-bold mb-4">Популярне в каталозі</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <figure class="bg-white rounded-xl shadow overflow-hidden">
+            <img src="{{ url_for('static', filename='img/bmw-3.jpg') }}" alt="BMW 3 Series" class="w-full h-44 object-cover">
+            <figcaption class="p-4 font-semibold">BMW 3 Series</figcaption>
+        </figure>
+        <figure class="bg-white rounded-xl shadow overflow-hidden">
+            <img src="{{ url_for('static', filename='img/vw-golf.jpg') }}" alt="Volkswagen Golf" class="w-full h-44 object-cover">
+            <figcaption class="p-4 font-semibold">Volkswagen Golf</figcaption>
+        </figure>
+        <figure class="bg-white rounded-xl shadow overflow-hidden">
+            <img src="{{ url_for('static', filename='img/skoda-octavia.jpg') }}" alt="Škoda Octavia" class="w-full h-44 object-cover">
+            <figcaption class="p-4 font-semibold">Škoda Octavia</figcaption>
+        </figure>
+    </div>
+    <p class="mt-4 text-zinc-600">
+        Увесь асортимент — на сторінці
+        <a href="{{ url_for('shop') }}" class="text-red-600 font-semibold underline">«Магазин»</a>.
+    </p>
+</section>
 {% endblock %}
