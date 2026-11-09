@@ -3,10 +3,73 @@
 {% block title %}Магазин{% endblock %}
 
 {% block content %}
-    <h1 class="text-3xl font-bold mb-4">Магазин автомобілів</h1>
-    <p class="text-lg mb-6">Оберіть автомобіль із нашого каталогу.</p>
-    <br>
-    <h2 class="text-xl font-bold mb-0.5">Марка та модель: <span class="font-normal">Mercedes-Benz CLS 63 AMG S 4MATIC</span></h2>
-    <p class="text-xl font-bold mb-1">Рік випуску: <span class="font-normal">2016</span></p>
-    <p class="text-xl font-bold mb-1">Опис: <span class="font-normal">Автомобіль у бездоганному технічному та естетичному стані. Багата рестайлінгова комплектація: інтелектуальна світлодіодна оптика MULTIBEAM LED, оновлена мультимедійна система, спортивні мультиконтурні сидіння з вентиляцією, масажем та динамічною підтримкою в поворотах. Повністю оригінальний заводський стан, без сумнівного тюнінгу. Обслуговувався виключно за регламентом якісними компонентами. Обґрунтований торг можливий лише біля капота справжньому поціновувачу марки.</span></p>
+<h1 class="text-3xl font-bold mb-2">Магазин автомобілів</h1>
+<p class="text-lg text-zinc-600 mb-8">
+    Оберіть автомобіль із нашого каталогу. Асортимент і характеристики — демонстраційні.
+</p>
+
+<!-- Сітка карток: 1 колонка на телефоні, 2 на планшеті, 3 на широкому екрані -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <article class="bg-white rounded-xl shadow overflow-hidden">
+        <img src="{{ url_for('static', filename='img/mercedes-cls.jpg') }}" alt="Mercedes-AMG CLS 53" class="w-full h-48 object-cover">
+        <div class="p-5">
+            <span class="inline-block bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded mb-2">Бізнес-клас</span>
+            <h2 class="text-xl font-bold">Mercedes-AMG CLS 53</h2>
+            <p class="text-sm text-zinc-500 mb-3">2019 • бензин • автомат • повний привід</p>
+            <p>Чотиридверне купе зі спортивним характером, світлодіодною оптикою та багатою комплектацією.</p>
+        </div>
+    </article>
+
+    <article class="bg-white rounded-xl shadow overflow-hidden">
+        <img src="{{ url_for('static', filename='img/bmw-3.jpg') }}" alt="BMW 3 Series" class="w-full h-48 object-cover">
+        <div class="p-5">
+            <span class="inline-block bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded mb-2">Седан</span>
+            <h2 class="text-xl font-bold">BMW 3 Series</h2>
+            <p class="text-sm text-zinc-500 mb-3">2022 • бензин • автомат • задній привід</p>
+            <p>Динамічний седан для тих, хто любить кермувати й цінує точну керованість.</p>
+        </div>
+    </article>
+
+    <article class="bg-white rounded-xl shadow overflow-hidden">
+        <img src="{{ url_for('static', filename='img/audi-a6.jpg') }}" alt="Audi A6" class="w-full h-48 object-cover">
+        <div class="p-5">
+            <span class="inline-block bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded mb-2">Бізнес-клас</span>
+            <h2 class="text-xl font-bold">Audi A6</h2>
+            <p class="text-sm text-zinc-500 mb-3">2025 • бензин • автомат • повний привід</p>
+            <p>Просторий і тихий автомобіль для далеких поїздок та щоденних ділових справ.</p>
+        </div>
+    </article>
+
+    <article class="bg-white rounded-xl shadow overflow-hidden">
+        <img src="{{ url_for('static', filename='img/vw-golf.jpg') }}" alt="Volkswagen Golf" class="w-full h-48 object-cover">
+        <div class="p-5">
+            <span class="inline-block bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded mb-2">Хетчбек</span>
+            <h2 class="text-xl font-bold">Volkswagen Golf</h2>
+            <p class="text-sm text-zinc-500 mb-3">2020 • бензин • механіка • передній привід</p>
+            <p>Компактний і практичний хетчбек — зручний у місті та економний у повсякденних поїздках.</p>
+        </div>
+    </article>
+
+    <article class="bg-white rounded-xl shadow overflow-hidden">
+        <img src="{{ url_for('static', filename='img/toyota-camry.jpg') }}" alt="Toyota Camry" class="w-full h-48 object-cover">
+        <div class="p-5">
+            <span class="inline-block bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded mb-2">Седан</span>
+            <h2 class="text-xl font-bold">Toyota Camry</h2>
+            <p class="text-sm text-zinc-500 mb-3">2018 • бензин • автомат • передній привід</p>
+            <p>Надійний сімейний седан із просторим салоном і великим багажником.</p>
+        </div>
+    </article>
+
+    <article class="bg-white rounded-xl shadow overflow-hidden">
+        <img src="{{ url_for('static', filename='img/skoda-octavia.jpg') }}" alt="Škoda Octavia" class="w-full h-48 object-cover">
+        <div class="p-5">
+            <span class="inline-block bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded mb-2">Ліфтбек</span>
+            <h2 class="text-xl font-bold">Škoda Octavia</h2>
+            <p class="text-sm text-zinc-500 mb-3">2021 • дизель • автомат • передній привід</p>
+            <p>Практичний автомобіль для сім'ї: місткий багажник і помірна витрата пального.</p>
+        </div>
+    </article>
+
+</div>
 {% endblock %}
