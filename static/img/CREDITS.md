@@ -10,3 +10,6 @@
 - toyota-camry.jpg — https://commons.wikimedia.org/wiki/File:2018_Toyota_Camry_(ASV70R)_Ascent_sedan_(2018-08-27)_01.jpg
 - skoda-octavia.jpg — https://commons.wikimedia.org/wiki/File:Skoda_Octavia_IV_liftback_(cropped).jpg
 - dealership.jpg — https://commons.wikimedia.org/wiki/File:Car_dealership.webp
+- tesla-model3.jpg — https://commons.wikimedia.org/wiki/File:Tesla_Model_3_(2023)_Autofrühling_Ulm_IMG_9282.jpg (автор Alexander-93, CC BY-SA 4.0)
+- toyota-rav4.jpg — https://commons.wikimedia.org/wiki/File:2024_Toyota_RAV4_Prime_XSE_Premium_in_Silver_Sky_with_Midnight_Black_roof,_front_left.jpg (автор Mr.choppers, CC BY-SA 4.0)
+- kia-sportage.jpg — https://commons.wikimedia.org/wiki/File:2025_Kia_Sportage_S_front_only.jpg (автор LuvsMG481, CC BY-SA 4.0)
