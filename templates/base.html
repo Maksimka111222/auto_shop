@@ -9,10 +9,10 @@
     <style>
         @keyframes slideDown {
             0% { max-height: 0; opacity: 0; }
-            100% { max-height: 300px; opacity: 1; }
+            100% { max-height: 500px; opacity: 1; }
         }
         @keyframes slideUp {
-            0% { max-height: 300px; opacity: 1; }
+            0% { max-height: 500px; opacity: 1; }
             100% { max-height: 0; opacity: 0; }
         }
         .animate-slide-down {
@@ -41,21 +41,30 @@
     </style>
 </head>
 <body class="bg-zinc-100 text-zinc-800 min-h-screen flex flex-col">
+    <!-- Пункти меню описані ОДИН раз і використовуються і для широкого, і для мобільного меню -->
+    {% set nav_links = [
+        ('home', 'Головна'),
+        ('shop', 'Магазин'),
+        ('about', 'Про нас'),
+        ('feedback.contact', "Зворотний зв'язок"),
+    ] %}
+
     <nav class="bg-zinc-900 p-4 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
+        <div class="container mx-auto flex justify-between items-center gap-4">
             <a href="{{ url_for('home') }}" class="text-white text-2xl font-extrabold tracking-wide">MOTO<span class="text-red-500">REX</span></a>
 
-            <!-- Меню для широких екранів -->
-            <div class="hidden md:flex space-x-6">
-                <a href="{{ url_for('home') }}" class="text-white hover:text-red-400 transition-colors duration-300 hover:underline">Головна</a>
-                <a href="{{ url_for('shop') }}" class="text-white hover:text-red-400 transition-colors duration-300 hover:underline">Магазин</a>
-                <a href="{{ url_for('about') }}" class="text-white hover:text-red-400 transition-colors duration-300 hover:underline">Про нас</a>
-                <a href="{{ url_for('contact') }}" class="text-white hover:text-red-400 transition-colors duration-300 hover:underline">Зворотний зв'язок</a>
+            <!-- Меню для широких екранів (від 1024px) -->
+            <div class="hidden lg:flex items-center gap-6">
+                {% for endpoint, title in nav_links %}
+                <a href="{{ url_for(endpoint) }}"
+                   class="transition-colors duration-300 hover:text-red-400 hover:underline {{ 'text-red-400 font-semibold' if request.endpoint == endpoint else 'text-white' }}">{{ title }}</a>
+                {% endfor %}
+                <a href="{{ url_for('admin.dashboard') }}" class="rounded-lg border border-zinc-600 px-3 py-1 text-zinc-300 hover:border-red-500 hover:text-white transition-colors duration-300">Адмін-панель</a>
             </div>
 
             <!-- Кнопка меню для мобільних пристроїв -->
             <button id="mobile-menu-button" type="button" aria-label="Відкрити меню" aria-expanded="false"
-                    class="md:hidden text-white w-6 h-6 relative cursor-pointer focus:outline-none">
+                    class="lg:hidden text-white w-6 h-6 relative cursor-pointer focus:outline-none">
                 <span class="burger-line line1 block absolute left-0 h-0.5 w-6 bg-current"></span>
                 <span class="burger-line line2 block absolute left-0 h-0.5 w-6 bg-current"></span>
                 <span class="burger-line line3 block absolute left-0 h-0.5 w-6 bg-current"></span>
@@ -63,15 +72,29 @@
         </div>
 
         <!-- Мобільне меню (приховане за замовчуванням) -->
-        <div id="mobile-menu" class="hidden md:hidden overflow-hidden container mx-auto mt-2">
-            <a href="{{ url_for('home') }}" class="block text-white hover:text-red-400 py-2 transition duration-300 hover:translate-x-2">Головна</a>
-            <a href="{{ url_for('shop') }}" class="block text-white hover:text-red-400 py-2 transition duration-300 hover:translate-x-2">Магазин</a>
-            <a href="{{ url_for('about') }}" class="block text-white hover:text-red-400 py-2 transition duration-300 hover:translate-x-2">Про нас</a>
-            <a href="{{ url_for('contact') }}" class="block text-white hover:text-red-400 py-2 transition duration-300 hover:translate-x-2">Зворотний зв'язок</a>
+        <div id="mobile-menu" class="hidden lg:hidden overflow-hidden container mx-auto mt-2">
+            {% for endpoint, title in nav_links %}
+            <a href="{{ url_for(endpoint) }}" class="block text-white hover:text-red-400 py-2 transition duration-300 hover:translate-x-2">{{ title }}</a>
+            {% endfor %}
+            <a href="{{ url_for('admin.dashboard') }}" class="block text-zinc-300 hover:text-red-400 py-2 transition duration-300 hover:translate-x-2">Адмін-панель</a>
         </div>
     </nav>
 
     <main class="container mx-auto mt-8 p-4 flex-1">
+        <!-- Повідомлення flash (успіх / помилка) після дій користувача -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="mb-6 space-y-2">
+            {% for category, message in messages %}
+            <div role="alert"
+                 class="rounded-lg border px-4 py-3 {{ 'border-red-300 bg-red-50 text-red-800' if category == 'error' else 'border-green-300 bg-green-50 text-green-800' }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
         {% block content %}{% endblock %}
     </main>
 

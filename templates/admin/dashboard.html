@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_macros.html" import admin_nav %}
+
+{% block title %}Адмін-панель{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-4">Адмін-панель</h1>
+{{ admin_nav('dashboard') }}
+
+<!-- Кількість записів у кожній таблиці БД -->
+{% set cards = [
+    ('Відгуки', stats['feedback'], 'admin.feedback'),
+] %}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    {% for title, value, endpoint in cards %}
+    <div class="bg-white rounded-xl shadow p-6 border-t-4 border-red-600">
+        <p class="text-zinc-500">{{ title }}</p>
+        <p class="text-4xl font-extrabold my-2">{{ value }}</p>
+        {% if endpoint %}
+        <a href="{{ url_for(endpoint) }}" class="text-sm font-semibold text-red-600 hover:underline">Відкрити →</a>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<p class="mt-8 text-sm text-zinc-500">
+    Зараз адмін-панель відкрита для всіх. Вхід лише для адміністратора буде додано
+    разом із системою користувачів і ролей.
+</p>
+{% endblock %}

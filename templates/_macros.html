@@ -1,0 +1,16 @@
+{# Спільні фрагменти (макроси) для шаблонів. Підключення:
+   {% from "_macros.html" import admin_nav %} #}
+
+{# Меню адмін-панелі. active — назва поточного розділу, щоб його підсвітити #}
+{% macro admin_nav(active) %}
+{% set items = [
+    ('dashboard', 'admin.dashboard', 'Огляд'),
+    ('feedback', 'admin.feedback', 'Відгуки'),
+] %}
+<nav class="mb-6 flex flex-wrap gap-2 border-b border-zinc-300 pb-3 text-sm font-semibold">
+    {% for key, endpoint, title in items %}
+    <a href="{{ url_for(endpoint) }}"
+       class="rounded-lg px-3 py-1.5 transition-colors duration-200 {{ 'bg-zinc-900 text-white' if key == active else 'text-zinc-600 hover:bg-zinc-200' }}">{{ title }}</a>
+    {% endfor %}
+</nav>
+{% endmacro %}
