@@ -7,10 +7,10 @@
 import os
 from datetime import datetime
 
-from flask import Flask, render_template
+from flask import Flask, render_template, session, url_for
 
 import models
-from routes import admin_bp, feedback_bp
+from routes import admin_bp, feedback_bp, shop_bp
 
 app = Flask(__name__)
 
@@ -33,6 +33,23 @@ with app.app_context():
 # Реєструємо групи маршрутів.
 app.register_blueprint(feedback_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(shop_bp)
+
+
+@app.template_filter('money')
+def money(value):
+    """Форматує ціну: 32500 -> '$32 500'."""
+    return '$' + f'{value:,.0f}'.replace(',', ' ')
+
+
+@app.template_filter('car_image')
+def car_image(path):
+    """Повертає адресу фото авто: зовнішнє посилання або файл із папки static."""
+    if not path:
+        return ''
+    if path.startswith(('http://', 'https://')):
+        return path
+    return url_for('static', filename=path)
 
 
 @app.context_processor
@@ -40,6 +57,8 @@ def inject_globals():
     """Змінні, доступні в усіх шаблонах."""
     return {
         'current_year': datetime.now().year,
+        # Кількість авто в кошику для значка в меню
+        'cart_count': sum(session.get('cart', {}).values()),
     }
 
 
@@ -51,12 +70,6 @@ def home():
 @app.route('/about')
 def about():
     return render_template('about.html')
-
-
-# Магазин поки що статичний; у наступному етапі він переїде в routes/shop.py
-@app.route('/shop')
-def shop():
-    return render_template('shop.html')
 
 
 if __name__ == '__main__':

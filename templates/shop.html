@@ -4,72 +4,111 @@
 
 {% block content %}
 <h1 class="text-3xl font-bold mb-2">Магазин автомобілів</h1>
-<p class="text-lg text-zinc-600 mb-8">
+<p class="text-lg text-zinc-600 mb-6">
     Оберіть автомобіль із нашого каталогу. Асортимент і характеристики — демонстраційні.
 </p>
 
+<!-- Пошук і фільтри (Рівень 3). method="get": параметри потрапляють в адресу /shop?q=...,
+     тому результат пошуку можна оновити (F5) або надіслати посиланням -->
+<form action="{{ url_for('shop.shop') }}" method="get" class="bg-white rounded-xl shadow p-4 md:p-5 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="sm:col-span-2">
+            <label for="q" class="block text-sm font-semibold mb-1">Пошук</label>
+            <input id="q" name="q" type="search" value="{{ filters['q'] }}" placeholder="Марка, модель або опис"
+                   class="w-full rounded-lg border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+        </div>
+        <div>
+            <label for="brand" class="block text-sm font-semibold mb-1">Марка</label>
+            <select id="brand" name="brand" class="w-full rounded-lg border border-zinc-300 px-3 py-2 bg-white">
+                <option value="">Усі марки</option>
+                {% for brand in brands %}
+                <option value="{{ brand }}" {{ 'selected' if filters['brand'] == brand }}>{{ brand }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="body_type" class="block text-sm font-semibold mb-1">Кузов</label>
+            <select id="body_type" name="body_type" class="w-full rounded-lg border border-zinc-300 px-3 py-2 bg-white">
+                <option value="">Будь-який</option>
+                {% for value in body_types %}
+                <option value="{{ value }}" {{ 'selected' if filters['body_type'] == value }}>{{ value }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="fuel" class="block text-sm font-semibold mb-1">Пальне</label>
+            <select id="fuel" name="fuel" class="w-full rounded-lg border border-zinc-300 px-3 py-2 bg-white">
+                <option value="">Будь-яке</option>
+                {% for value in fuel_types %}
+                <option value="{{ value }}" {{ 'selected' if filters['fuel'] == value }}>{{ value }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="transmission" class="block text-sm font-semibold mb-1">Коробка передач</label>
+            <select id="transmission" name="transmission" class="w-full rounded-lg border border-zinc-300 px-3 py-2 bg-white">
+                <option value="">Будь-яка</option>
+                {% for value in transmissions %}
+                <option value="{{ value }}" {{ 'selected' if filters['transmission'] == value }}>{{ value }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <span class="block text-sm font-semibold mb-1">Ціна, $</span>
+            <div class="flex gap-2">
+                <input name="price_min" type="number" min="0" step="500" value="{{ filters['price_min'] }}" placeholder="від" aria-label="Ціна від"
+                       class="w-full rounded-lg border border-zinc-300 px-3 py-2">
+                <input name="price_max" type="number" min="0" step="500" value="{{ filters['price_max'] }}" placeholder="до" aria-label="Ціна до"
+                       class="w-full rounded-lg border border-zinc-300 px-3 py-2">
+            </div>
+        </div>
+        <div>
+            <label for="sort" class="block text-sm font-semibold mb-1">Сортування</label>
+            <select id="sort" name="sort" class="w-full rounded-lg border border-zinc-300 px-3 py-2 bg-white">
+                {% for key, option in sort_options.items() %}
+                <option value="{{ key }}" {{ 'selected' if filters['sort'] == key }}>{{ option[0] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="mt-4 flex flex-wrap items-center gap-3">
+        <button type="submit" class="rounded-lg bg-red-600 px-5 py-2 font-semibold text-white hover:bg-red-700 transition-colors duration-300 cursor-pointer">Знайти</button>
+        {% if is_filtered %}
+        <a href="{{ url_for('shop.shop') }}" class="text-zinc-600 underline hover:text-red-600">Скинути фільтри</a>
+        {% endif %}
+        <span class="text-zinc-500 sm:ml-auto">Знайдено авто: <strong>{{ cars|length }}</strong></span>
+    </div>
+</form>
+
+{% if cars %}
 <!-- Сітка карток: 1 колонка на телефоні, 2 на планшеті, 3 на широкому екрані -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-
-    <article class="bg-white rounded-xl shadow overflow-hidden">
-        <img src="{{ url_for('static', filename='img/mercedes-cls.jpg') }}" alt="Mercedes-AMG CLS 53" class="w-full h-48 object-cover">
-        <div class="p-5">
-            <span class="inline-block bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded mb-2">Бізнес-клас</span>
-            <h2 class="text-xl font-bold">Mercedes-AMG CLS 53</h2>
-            <p class="text-sm text-zinc-500 mb-3">2019 • бензин • автомат • повний привід</p>
-            <p>Чотиридверне купе зі спортивним характером, світлодіодною оптикою та багатою комплектацією.</p>
+    {% for car in cars %}
+    <article class="bg-white rounded-xl shadow overflow-hidden flex flex-col">
+        <img src="{{ car['image']|car_image }}" alt="{{ car['brand'] }} {{ car['name'] }}" class="w-full h-48 object-cover">
+        <div class="p-5 flex flex-col flex-1">
+            <span class="self-start bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded mb-2">{{ car['body_type'] }}</span>
+            <h2 class="text-xl font-bold">{{ car['brand'] }} {{ car['name'] }}</h2>
+            <p class="text-sm text-zinc-500 mb-3">{{ car['year'] }} • {{ car['fuel']|lower }} • {{ car['transmission']|lower }}</p>
+            <p class="mb-4">{{ car['description'] }}</p>
+            <div class="mt-auto">
+                <p class="text-2xl font-extrabold mb-3">{{ car['price']|money }}</p>
+                <div class="flex flex-wrap gap-2">
+                    <form action="{{ url_for('shop.add_to_cart', car_id=car['id']) }}" method="post">
+                        <!-- Після додавання повертаємось на цю ж сторінку з тими ж фільтрами -->
+                        <input type="hidden" name="next" value="{{ request.full_path }}">
+                        <button type="submit" class="rounded-lg bg-zinc-900 px-4 py-2 font-semibold text-white hover:bg-red-600 transition-colors duration-300 cursor-pointer">До кошика</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </article>
-
-    <article class="bg-white rounded-xl shadow overflow-hidden">
-        <img src="{{ url_for('static', filename='img/bmw-3.jpg') }}" alt="BMW 3 Series" class="w-full h-48 object-cover">
-        <div class="p-5">
-            <span class="inline-block bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded mb-2">Седан</span>
-            <h2 class="text-xl font-bold">BMW 3 Series</h2>
-            <p class="text-sm text-zinc-500 mb-3">2022 • бензин • автомат • задній привід</p>
-            <p>Динамічний седан для тих, хто любить кермувати й цінує точну керованість.</p>
-        </div>
-    </article>
-
-    <article class="bg-white rounded-xl shadow overflow-hidden">
-        <img src="{{ url_for('static', filename='img/audi-a6.jpg') }}" alt="Audi A6" class="w-full h-48 object-cover">
-        <div class="p-5">
-            <span class="inline-block bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded mb-2">Бізнес-клас</span>
-            <h2 class="text-xl font-bold">Audi A6</h2>
-            <p class="text-sm text-zinc-500 mb-3">2025 • бензин • автомат • повний привід</p>
-            <p>Просторий і тихий автомобіль для далеких поїздок та щоденних ділових справ.</p>
-        </div>
-    </article>
-
-    <article class="bg-white rounded-xl shadow overflow-hidden">
-        <img src="{{ url_for('static', filename='img/vw-golf.jpg') }}" alt="Volkswagen Golf" class="w-full h-48 object-cover">
-        <div class="p-5">
-            <span class="inline-block bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded mb-2">Хетчбек</span>
-            <h2 class="text-xl font-bold">Volkswagen Golf</h2>
-            <p class="text-sm text-zinc-500 mb-3">2020 • бензин • механіка • передній привід</p>
-            <p>Компактний і практичний хетчбек — зручний у місті та економний у повсякденних поїздках.</p>
-        </div>
-    </article>
-
-    <article class="bg-white rounded-xl shadow overflow-hidden">
-        <img src="{{ url_for('static', filename='img/toyota-camry.jpg') }}" alt="Toyota Camry" class="w-full h-48 object-cover">
-        <div class="p-5">
-            <span class="inline-block bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded mb-2">Седан</span>
-            <h2 class="text-xl font-bold">Toyota Camry</h2>
-            <p class="text-sm text-zinc-500 mb-3">2018 • бензин • автомат • передній привід</p>
-            <p>Надійний сімейний седан із просторим салоном і великим багажником.</p>
-        </div>
-    </article>
-
-    <article class="bg-white rounded-xl shadow overflow-hidden">
-        <img src="{{ url_for('static', filename='img/skoda-octavia.jpg') }}" alt="Škoda Octavia" class="w-full h-48 object-cover">
-        <div class="p-5">
-            <span class="inline-block bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded mb-2">Ліфтбек</span>
-            <h2 class="text-xl font-bold">Škoda Octavia</h2>
-            <p class="text-sm text-zinc-500 mb-3">2021 • дизель • автомат • передній привід</p>
-            <p>Практичний автомобіль для сім'ї: місткий багажник і помірна витрата пального.</p>
-        </div>
-    </article>
-
+    {% endfor %}
 </div>
+{% else %}
+<div class="bg-white rounded-xl shadow p-8 text-center">
+    <p class="text-lg font-semibold mb-2">За вашим запитом авто не знайдено.</p>
+    <a href="{{ url_for('shop.shop') }}" class="text-red-600 underline">Показати весь каталог</a>
+</div>
+{% endif %}
 {% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Кошик{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-6">Кошик</h1>
+
+{% if lines %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Список авто в кошику -->
+    <section class="lg:col-span-2 space-y-4">
+        {% for line in lines %}
+        {% set car = line['car'] %}
+        <article class="bg-white rounded-xl shadow p-4 flex flex-col sm:flex-row gap-4">
+            <img src="{{ car['image']|car_image }}" alt="{{ car['brand'] }} {{ car['name'] }}" class="w-full sm:w-40 h-28 object-cover rounded-lg">
+            <div class="flex-1">
+                <h2 class="text-lg font-bold">{{ car['brand'] }} {{ car['name'] }}</h2>
+                <p class="text-sm text-zinc-500">{{ car['year'] }} • {{ car['fuel']|lower }} • {{ car['transmission']|lower }}</p>
+                <p class="mt-1">Ціна: <strong>{{ car['price']|money }}</strong></p>
+            </div>
+            <div class="flex sm:flex-col items-center sm:items-end justify-between gap-2">
+                <!-- Зміна кількості: окрема POST-форма для кожного рядка -->
+                <form action="{{ url_for('shop.update_cart', car_id=car['id']) }}" method="post" class="flex items-center gap-2">
+                    <label for="qty-{{ car['id'] }}" class="text-sm text-zinc-500">К-сть</label>
+                    <input id="qty-{{ car['id'] }}" name="quantity" type="number" min="1" max="{{ max_quantity }}" value="{{ line['quantity'] }}"
+                           class="w-16 rounded-lg border border-zinc-300 px-2 py-1">
+                    <button type="submit" class="text-sm font-semibold text-zinc-700 underline cursor-pointer">Оновити</button>
+                </form>
+                <p class="font-bold">{{ line['subtotal']|money }}</p>
+                <form action="{{ url_for('shop.remove_from_cart', car_id=car['id']) }}" method="post">
+                    <button type="submit" class="text-sm font-semibold text-red-600 hover:text-red-800 cursor-pointer">Прибрати</button>
+                </form>
+            </div>
+        </article>
+        {% endfor %}
+        <p class="text-right text-xl">Разом: <strong class="text-2xl">{{ total|money }}</strong></p>
+    </section>
+
+    <!-- Оформлення замовлення -->
+    <section class="bg-white rounded-xl shadow p-6 h-fit">
+        <h2 class="text-xl font-bold mb-4">Оформлення замовлення</h2>
+        <form action="{{ url_for('shop.checkout') }}" method="post" class="space-y-3">
+            <div>
+                <label for="customer_name" class="block text-sm font-semibold mb-1">Ім'я та прізвище</label>
+                <input id="customer_name" name="customer_name" required value="{{ form['customer_name'] }}" autocomplete="name"
+                       class="w-full rounded-lg border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+            </div>
+            <div>
+                <label for="email" class="block text-sm font-semibold mb-1">Email</label>
+                <input id="email" name="email" type="email" required value="{{ form['email'] }}" autocomplete="email"
+                       class="w-full rounded-lg border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+            </div>
+            <div>
+                <label for="phone" class="block text-sm font-semibold mb-1">Телефон</label>
+                <input id="phone" name="phone" type="tel" required value="{{ form['phone'] }}" placeholder="+380 67 123 45 67" autocomplete="tel"
+                       class="w-full rounded-lg border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+            </div>
+            <div>
+                <label for="comment" class="block text-sm font-semibold mb-1">Коментар (необов'язково)</label>
+                <textarea id="comment" name="comment" rows="3" maxlength="500"
+                          class="w-full rounded-lg border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">{{ form['comment'] }}</textarea>
+            </div>
+            <button type="submit" class="w-full rounded-lg bg-red-600 px-6 py-3 font-semibold text-white hover:bg-red-700 transition-colors duration-300 cursor-pointer">
+                Оформити замовлення
+            </button>
+            <p class="text-xs text-zinc-500">Оплата не потрібна: після оформлення менеджер зв'яжеться з вами.</p>
+        </form>
+    </section>
+</div>
+{% else %}
+<div class="bg-white rounded-xl shadow p-8 text-center">
+    <p class="text-lg font-semibold mb-2">Кошик порожній.</p>
+    <a href="{{ url_for('shop.shop') }}" class="text-red-600 underline">Перейти до каталогу</a>
+</div>
+{% endif %}
+{% endblock %}

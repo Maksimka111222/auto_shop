@@ -44,7 +44,7 @@
     <!-- Пункти меню описані ОДИН раз і використовуються і для широкого, і для мобільного меню -->
     {% set nav_links = [
         ('home', 'Головна'),
-        ('shop', 'Магазин'),
+        ('shop.shop', 'Магазин'),
         ('about', 'Про нас'),
         ('feedback.contact', "Зворотний зв'язок"),
     ] %}
@@ -59,6 +59,10 @@
                 <a href="{{ url_for(endpoint) }}"
                    class="transition-colors duration-300 hover:text-red-400 hover:underline {{ 'text-red-400 font-semibold' if request.endpoint == endpoint else 'text-white' }}">{{ title }}</a>
                 {% endfor %}
+                <a href="{{ url_for('shop.cart') }}" class="relative text-white hover:text-red-400 transition-colors duration-300">
+                    Кошик
+                    {% if cart_count %}<span class="ml-1 rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold">{{ cart_count }}</span>{% endif %}
+                </a>
                 <a href="{{ url_for('admin.dashboard') }}" class="rounded-lg border border-zinc-600 px-3 py-1 text-zinc-300 hover:border-red-500 hover:text-white transition-colors duration-300">Адмін-панель</a>
             </div>
 
@@ -76,6 +80,7 @@
             {% for endpoint, title in nav_links %}
             <a href="{{ url_for(endpoint) }}" class="block text-white hover:text-red-400 py-2 transition duration-300 hover:translate-x-2">{{ title }}</a>
             {% endfor %}
+            <a href="{{ url_for('shop.cart') }}" class="block text-white hover:text-red-400 py-2 transition duration-300 hover:translate-x-2">Кошик{% if cart_count %} ({{ cart_count }}){% endif %}</a>
             <a href="{{ url_for('admin.dashboard') }}" class="block text-zinc-300 hover:text-red-400 py-2 transition duration-300 hover:translate-x-2">Адмін-панель</a>
         </div>
     </nav>

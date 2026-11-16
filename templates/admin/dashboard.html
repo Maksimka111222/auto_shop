@@ -10,6 +10,8 @@
 <!-- Кількість записів у кожній таблиці БД -->
 {% set cards = [
     ('Відгуки', stats['feedback'], 'admin.feedback'),
+    ('Автомобілі', stats['cars'], None),
+    ('Замовлення', stats['orders'], None),
 ] %}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
     {% for title, value, endpoint in cards %}

@@ -11,6 +11,8 @@ def dashboard():
     """Головна сторінка адмінки: короткі підсумки по таблицях."""
     stats = {
         'feedback': models.count_rows('feedback'),
+        'cars': models.count_rows('cars'),
+        'orders': models.count_rows('orders'),
     }
     return render_template('admin/dashboard.html', stats=stats)
 
