@@ -1,7 +1,7 @@
 """Запис на тест-драйв (Рівень 2: додаткова таблиця test_drives)."""
 import re
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, g, redirect, render_template, request, url_for
 
 import models
 
@@ -20,6 +20,8 @@ def book(car_id):
         return redirect(url_for('shop.shop'))
 
     form = {'customer_name': '', 'phone': '', 'email': '', 'preferred_date': '', 'comment': ''}
+    if g.user:
+        form.update(customer_name=g.user['name'], email=g.user['email'])
 
     if request.method == 'POST':
         form = {key: request.form.get(key, '').strip() for key in form}
@@ -40,7 +42,8 @@ def book(car_id):
             return render_template('test_drive.html', car=car, form=form, min_date=models.today()), 400
 
         models.add_test_drive(car_id, form['customer_name'], form['phone'], form['email'],
-                              form['preferred_date'], form['comment'])
+                              form['preferred_date'], form['comment'],
+                              user_id=g.user['id'] if g.user else None)
         flash(f'Заявку на тест-драйв {car["brand"]} {car["name"]} прийнято. '
               f'Ми зателефонуємо, щоб підтвердити час.', 'success')
         return redirect(url_for('shop.shop'))

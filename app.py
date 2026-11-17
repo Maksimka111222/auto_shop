@@ -10,7 +10,8 @@ from datetime import datetime
 from flask import Flask, render_template, session, url_for
 
 import models
-from routes import admin_bp, feedback_bp, shop_bp, test_drive_bp
+from routes import admin_bp, auth_bp, feedback_bp, shop_bp, test_drive_bp
+from routes.auth import load_current_user
 
 app = Flask(__name__)
 
@@ -35,6 +36,10 @@ app.register_blueprint(feedback_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(shop_bp)
 app.register_blueprint(test_drive_bp)
+app.register_blueprint(auth_bp)
+
+# Перед кожним запитом визначаємо, хто увійшов (g.user).
+app.before_request(load_current_user)
 
 
 @app.template_filter('money')
@@ -61,6 +66,18 @@ def inject_globals():
         # Кількість авто в кошику для значка в меню
         'cart_count': sum(session.get('cart', {}).values()),
     }
+
+
+@app.errorhandler(403)
+def forbidden(error):
+    return render_template('error.html', code=403, title='Доступ заборонено',
+                           message='Ця сторінка доступна лише адміністраторам.'), 403
+
+
+@app.errorhandler(404)
+def not_found(error):
+    return render_template('error.html', code=404, title='Сторінку не знайдено',
+                           message='Можливо, посилання застаріло або містить помилку.'), 404
 
 
 @app.route('/')

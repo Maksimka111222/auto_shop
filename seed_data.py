@@ -29,9 +29,20 @@ CARS = [
      'Сучасний сімейний кросовер із великим екраном мультимедіа та довгою гарантією.'),
 ]
 
+# Демонстраційні облікові записи. Паролі — ЛИШЕ для навчального проєкту.
+USERS = [
+    ('Адміністратор MOTOREX', 'admin@motorex.ua', 'admin123', 'admin'),
+    ('Тестовий клієнт', 'client@motorex.ua', 'client123', 'client'),
+]
+
 
 def seed():
     models.init_db()
+
+    for name, email, password, role in USERS:
+        if models.get_user_by_email(email) is None:
+            models.create_user(name, email, password, role)
+            print(f'Користувач {email} ({role}) створений, пароль: {password}')
 
     if models.get_cars():
         print('Автомобілі вже є в базі — пропускаю.')

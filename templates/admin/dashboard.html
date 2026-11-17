@@ -13,6 +13,7 @@
     ('Автомобілі', stats['cars'], 'admin.cars'),
     ('Замовлення', stats['orders'], 'admin.orders'),
     ('Заявки на тест-драйв', stats['test_drives'], 'admin.test_drives'),
+    ('Користувачі', stats['users'], 'admin.users'),
 ] %}
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
     {% for title, value, endpoint in cards %}
@@ -25,9 +26,4 @@
     </div>
     {% endfor %}
 </div>
-
-<p class="mt-8 text-sm text-zinc-500">
-    Зараз адмін-панель відкрита для всіх. Вхід лише для адміністратора буде додано
-    разом із системою користувачів і ролей.
-</p>
 {% endblock %}

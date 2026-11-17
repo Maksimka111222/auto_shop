@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Реєстрація{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-md bg-white rounded-xl shadow p-6 md:p-8">
+    <h1 class="text-2xl font-bold mb-2">Реєстрація</h1>
+    <p class="text-zinc-600 mb-6">Обліковий запис зберігає історію ваших замовлень і тест-драйвів.</p>
+    <form method="post" class="space-y-4">
+        <div>
+            <label for="name" class="block font-semibold mb-1">Ім'я</label>
+            <input id="name" name="name" required maxlength="100" value="{{ form['name'] }}" autocomplete="name"
+                   class="w-full rounded-lg border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+        </div>
+        <div>
+            <label for="email" class="block font-semibold mb-1">Email</label>
+            <input id="email" name="email" type="email" required value="{{ form['email'] }}" autocomplete="email"
+                   class="w-full rounded-lg border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+        </div>
+        <div>
+            <label for="password" class="block font-semibold mb-1">Пароль (від 6 символів)</label>
+            <input id="password" name="password" type="password" required minlength="6" autocomplete="new-password"
+                   class="w-full rounded-lg border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+        </div>
+        <div>
+            <label for="password2" class="block font-semibold mb-1">Повторіть пароль</label>
+            <input id="password2" name="password2" type="password" required minlength="6" autocomplete="new-password"
+                   class="w-full rounded-lg border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+        </div>
+        <button type="submit" class="w-full rounded-lg bg-red-600 px-6 py-2 font-semibold text-white hover:bg-red-700 cursor-pointer">Створити обліковий запис</button>
+    </form>
+    <p class="mt-6 text-zinc-600">Уже зареєстровані?
+        <a href="{{ url_for('auth.login') }}" class="font-semibold text-red-600 underline">Увійти</a>
+    </p>
+</section>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "_macros.html" import admin_nav %}
+
+{% block title %}Користувачі — адмін-панель{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-4">Адмін-панель</h1>
+{{ admin_nav('users') }}
+
+<h2 class="text-2xl font-bold mb-4">Користувачі <span class="text-zinc-400">({{ users|length }})</span></h2>
+
+<div class="overflow-x-auto bg-white rounded-xl shadow">
+    <table class="min-w-full text-left">
+        <thead class="bg-zinc-100 text-xs uppercase tracking-wider text-zinc-500">
+            <tr>
+                <th class="px-4 py-3">№</th>
+                <th class="px-4 py-3">Ім'я</th>
+                <th class="px-4 py-3">Email</th>
+                <th class="px-4 py-3">Замовлень</th>
+                <th class="px-4 py-3">Зареєстрований</th>
+                <th class="px-4 py-3">Роль</th>
+                <th class="px-4 py-3">Дії</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-200">
+            {% for user in users %}
+            <tr class="hover:bg-zinc-50">
+                <td class="px-4 py-3">{{ user['id'] }}</td>
+                <td class="px-4 py-3 font-semibold whitespace-nowrap">{{ user['name'] }}{% if user['id'] == g.user['id'] %} <span class="text-xs text-zinc-400">(це ви)</span>{% endif %}</td>
+                <td class="px-4 py-3">{{ user['email'] }}</td>
+                <td class="px-4 py-3">{{ user['orders_count'] }}</td>
+                <td class="px-4 py-3 text-sm text-zinc-500 whitespace-nowrap">{{ user['created_at'] }}</td>
+                <td class="px-4 py-3">
+                    {% if user['id'] == g.user['id'] %}
+                    <span class="font-semibold">{{ role_names[user['role']] }}</span>
+                    {% else %}
+                    <form action="{{ url_for('admin.user_role', user_id=user['id']) }}" method="post" class="flex gap-2">
+                        <select name="role" aria-label="Роль" class="rounded-lg border border-zinc-300 px-2 py-1 bg-white text-sm">
+                            {% for role in roles %}
+                            <option value="{{ role }}" {{ 'selected' if role == user['role'] }}>{{ role_names[role] }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="text-sm font-semibold text-zinc-700 underline cursor-pointer">Зберегти</button>
+                    </form>
+                    {% endif %}
+                </td>
+                <td class="px-4 py-3">
+                    {% if user['id'] != g.user['id'] %}
+                    <form action="{{ url_for('admin.user_delete', user_id=user['id']) }}" method="post"
+                          onsubmit="return confirm('Видалити користувача {{ user['email'] }}? Його замовлення залишаться.')">
+                        <button type="submit" class="text-sm font-semibold text-red-600 hover:text-red-800 cursor-pointer">Видалити</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

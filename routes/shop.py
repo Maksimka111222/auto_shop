@@ -1,7 +1,7 @@
 """Магазин: каталог із пошуком і фільтрами, кошик, оформлення замовлення."""
 import re
 
-from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, flash, g, redirect, render_template, request, session, url_for
 
 import models
 
@@ -112,6 +112,8 @@ def cart():
     lines = build_cart_lines()
     total = sum(line['subtotal'] for line in lines)
     form = {'customer_name': '', 'email': '', 'phone': '', 'comment': ''}
+    if g.user:  # авторизованому користувачу підставляємо його дані
+        form.update(customer_name=g.user['name'], email=g.user['email'])
     return render_template('cart.html', lines=lines, total=total,
                            max_quantity=MAX_QUANTITY, form=form)
 
@@ -167,7 +169,8 @@ def checkout():
                                max_quantity=MAX_QUANTITY, form=form), 400
 
     order_id = models.create_order(form['customer_name'], form['email'], form['phone'],
-                                   form['comment'], get_cart())
+                                   form['comment'], get_cart(),
+                                   user_id=g.user['id'] if g.user else None)
     save_cart({})
     flash(f'Замовлення №{order_id} оформлено. Менеджер зв’яжеться з вами найближчим часом.', 'success')
     return redirect(url_for('shop.shop'))

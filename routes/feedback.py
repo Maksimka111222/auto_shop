@@ -1,7 +1,7 @@
 """Сторінка «Зворотний зв'язок»: показ контактів і форма відгуку (CREATE)."""
 import re
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, g, redirect, render_template, request, url_for
 
 import models
 
@@ -31,6 +31,9 @@ def validate_feedback(form):
 def contact():
     # Порожня форма для GET-запиту
     form = {'name': '', 'email': '', 'message': ''}
+    # Якщо користувач увійшов, підставляємо його ім'я та email
+    if g.user:
+        form.update(name=g.user['name'], email=g.user['email'])
 
     if request.method == 'POST':
         form = {key: request.form.get(key, '').strip() for key in form}

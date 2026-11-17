@@ -19,6 +19,7 @@ from datetime import datetime
 from datetime import date
 
 from flask import current_app, g
+from werkzeug.security import check_password_hash, generate_password_hash
 
 # Допустимі статуси замовлення. Перший присвоюється новому замовленню.
 ORDER_STATUSES = ['Нове', 'В обробці', 'Підтверджене', 'Виконане', 'Скасоване']
@@ -39,6 +40,10 @@ SORT_OPTIONS = {
 
 # Статуси заявки на тест-драйв.
 TEST_DRIVE_STATUSES = ['Нова', 'Підтверджена', 'Проведена', 'Скасована']
+
+# Ролі користувачів.
+ROLES = ['client', 'admin']
+ROLE_NAMES = {'client': 'Клієнт', 'admin': 'Адміністратор'}
 
 SCHEMA = """
 -- Відгуки з форми «Зворотний зв'язок»
@@ -107,7 +112,27 @@ CREATE TABLE IF NOT EXISTS test_drives (
     created_at     TEXT NOT NULL,
     FOREIGN KEY (car_id) REFERENCES cars (id) ON DELETE CASCADE
 );
+
+-- Користувачі з ролями (Рівень 3). Пароль НІКОЛИ не зберігаємо відкрито —
+-- лише його хеш. COLLATE NOCASE: Test@Mail.com і test@mail.com — один email.
+CREATE TABLE IF NOT EXISTS users (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    name          TEXT NOT NULL,
+    email         TEXT NOT NULL UNIQUE COLLATE NOCASE,
+    password_hash TEXT NOT NULL,
+    role          TEXT NOT NULL DEFAULT 'client' CHECK (role IN ('client', 'admin')),
+    created_at    TEXT NOT NULL
+);
 """
+
+# Колонки, які додаються до ВЖЕ існуючих таблиць (міграція).
+# CREATE TABLE IF NOT EXISTS не змінює наявну таблицю, тому нові колонки
+# додаємо через ALTER TABLE, якщо їх ще немає.
+# ON DELETE SET NULL: якщо користувача видалили, його замовлення залишаються.
+MIGRATIONS = [
+    ('orders', 'user_id', 'INTEGER REFERENCES users (id) ON DELETE SET NULL'),
+    ('test_drives', 'user_id', 'INTEGER REFERENCES users (id) ON DELETE SET NULL'),
+]
 
 
 def now():
@@ -137,6 +162,13 @@ def init_db():
     """Створює таблиці, яких ще немає. Наявні дані не зачіпає."""
     db = get_db()
     db.executescript(SCHEMA)
+    for table, column, definition in MIGRATIONS:
+        # PRAGMA table_info повертає список колонок таблиці
+        columns = [row['name'] for row in db.execute(f'PRAGMA table_info({table})')]
+        if column not in columns:
+            # Назви таблиць/колонок беруться лише з нашого списку MIGRATIONS, не від користувача
+            db.execute(f'ALTER TABLE {table} ADD COLUMN {column} {definition}')
+    db.commit()
 
 
 # ------------------------------------------------------------------ відгуки
@@ -253,7 +285,7 @@ def get_cars_by_ids(ids):
 
 # --------------------------------------------------------------- замовлення
 
-def create_order(customer_name, email, phone, comment, cart):
+def create_order(customer_name, email, phone, comment, cart, user_id=None):
     """Створює замовлення з кошика {id авто: кількість}.
 
     Ціни беруться з БД, а не з браузера. Замовлення і його позиції
@@ -268,9 +300,9 @@ def create_order(customer_name, email, phone, comment, cart):
     db = get_db()
     with db:
         cur = db.execute(
-            'INSERT INTO orders (customer_name, email, phone, comment, total_price, status, created_at) '
-            'VALUES (?, ?, ?, ?, ?, ?, ?)',
-            (customer_name, email, phone, comment, total, ORDER_STATUSES[0], now()),
+            'INSERT INTO orders (customer_name, email, phone, comment, total_price, status, created_at, user_id) '
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            (customer_name, email, phone, comment, total, ORDER_STATUSES[0], now(), user_id),
         )
         order_id = cur.lastrowid
         db.executemany(
@@ -364,14 +396,14 @@ def delete_order(order_id):
 
 # ----------------------------------------------------- тест-драйви (Рівень 2)
 
-def add_test_drive(car_id, customer_name, phone, email, preferred_date, comment):
+def add_test_drive(car_id, customer_name, phone, email, preferred_date, comment, user_id=None):
     """CREATE: нова заявка на тест-драйв."""
     db = get_db()
     with db:
         cur = db.execute(
-            'INSERT INTO test_drives (car_id, customer_name, phone, email, preferred_date, comment, status, created_at) '
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            (car_id, customer_name, phone, email, preferred_date, comment, TEST_DRIVE_STATUSES[0], now()),
+            'INSERT INTO test_drives (car_id, customer_name, phone, email, preferred_date, comment, status, created_at, user_id) '
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            (car_id, customer_name, phone, email, preferred_date, comment, TEST_DRIVE_STATUSES[0], now(), user_id),
         )
     return cur.lastrowid
 
@@ -407,3 +439,79 @@ def delete_test_drive(test_drive_id):
 def today():
     """Сьогоднішня дата рядком 2026-11-16 (для перевірки дати тест-драйву)."""
     return date.today().isoformat()
+
+
+# ------------------------------------------------- користувачі (Рівень 3)
+
+def create_user(name, email, password, role='client'):
+    """Реєстрація. Пароль хешується (generate_password_hash), відкрито не зберігається.
+    Якщо email уже зайнятий, SQLite кине sqlite3.IntegrityError (UNIQUE)."""
+    if role not in ROLES:
+        raise ValueError(f'Невідома роль: {role}')
+    db = get_db()
+    with db:
+        cur = db.execute(
+            'INSERT INTO users (name, email, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?)',
+            (name, email, generate_password_hash(password), role, now()),
+        )
+    return cur.lastrowid
+
+
+def get_user(user_id):
+    return get_db().execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+
+
+def get_user_by_email(email):
+    return get_db().execute('SELECT * FROM users WHERE email = ?', (email,)).fetchone()
+
+
+def check_user(email, password):
+    """Повертає користувача, якщо email і пароль правильні, інакше None."""
+    user = get_user_by_email(email)
+    if user and check_password_hash(user['password_hash'], password):
+        return user
+    return None
+
+
+def get_users():
+    """Користувачі з кількістю їхніх замовлень (підзапит)."""
+    return get_db().execute(
+        'SELECT u.*, (SELECT COUNT(*) FROM orders o WHERE o.user_id = u.id) AS orders_count '
+        'FROM users u ORDER BY u.id'
+    ).fetchall()
+
+
+def update_user_role(user_id, role):
+    if role not in ROLES:
+        raise ValueError(f'Невідома роль: {role}')
+    db = get_db()
+    with db:
+        db.execute('UPDATE users SET role = ? WHERE id = ?', (role, user_id))
+
+
+def delete_user(user_id):
+    """Замовлення й заявки користувача залишаються (user_id стане NULL)."""
+    db = get_db()
+    with db:
+        db.execute('DELETE FROM users WHERE id = ?', (user_id,))
+
+
+def get_user_orders(user_id):
+    """Історія замовлень користувача для особистого кабінету."""
+    return get_db().execute(
+        'SELECT o.*, GROUP_CONCAT(c.brand || \' \' || c.name, \', \') AS cars '
+        'FROM orders o '
+        'JOIN order_items oi ON oi.order_id = o.id '
+        'JOIN cars c ON c.id = oi.car_id '
+        'WHERE o.user_id = ? GROUP BY o.id ORDER BY o.id DESC',
+        (user_id,),
+    ).fetchall()
+
+
+def get_user_test_drives(user_id):
+    """Заявки на тест-драйв користувача."""
+    return get_db().execute(
+        'SELECT td.*, c.brand, c.name AS car_name FROM test_drives td '
+        'JOIN cars c ON c.id = td.car_id WHERE td.user_id = ? ORDER BY td.id DESC',
+        (user_id,),
+    ).fetchall()

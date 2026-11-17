@@ -1,11 +1,22 @@
 """Адмін-панель MOTOREX (усі адреси починаються з /admin)."""
 import sqlite3
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
 
 import models
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+
+
+@admin_bp.before_request
+def require_admin():
+    """Виконується перед КОЖНИМ маршрутом адмінки.
+    Гість -> на сторінку входу; клієнт -> помилка 403 (доступ заборонено)."""
+    if g.user is None:
+        flash('Увійдіть як адміністратор, щоб відкрити адмін-панель.', 'error')
+        return redirect(url_for('auth.login', next=request.path))
+    if g.user['role'] != 'admin':
+        abort(403)
 
 
 @admin_bp.route('/')
@@ -16,6 +27,7 @@ def dashboard():
         'cars': models.count_rows('cars'),
         'orders': models.count_rows('orders'),
         'test_drives': models.count_rows('test_drives'),
+        'users': models.count_rows('users'),
     }
     return render_template('admin/dashboard.html', stats=stats)
 
@@ -185,3 +197,35 @@ def test_drive_delete(test_drive_id):
     models.delete_test_drive(test_drive_id)
     flash('Заявку видалено.', 'success')
     return redirect(url_for('admin.test_drives'))
+
+
+# ------------------------------------------------- користувачі (Рівень 3)
+
+@admin_bp.route('/users')
+def users():
+    return render_template('admin/users.html', users=models.get_users(),
+                           roles=models.ROLES, role_names=models.ROLE_NAMES)
+
+
+@admin_bp.route('/users/<int:user_id>/role', methods=['POST'])
+def user_role(user_id):
+    # Захист від ситуації «адмін забрав права сам у себе і більше не може зайти»
+    if user_id == g.user['id']:
+        flash('Не можна змінити роль власного облікового запису.', 'error')
+        return redirect(url_for('admin.users'))
+    try:
+        models.update_user_role(user_id, request.form.get('role', ''))
+        flash('Роль користувача змінено.', 'success')
+    except ValueError as error:
+        flash(str(error), 'error')
+    return redirect(url_for('admin.users'))
+
+
+@admin_bp.route('/users/<int:user_id>/delete', methods=['POST'])
+def user_delete(user_id):
+    if user_id == g.user['id']:
+        flash('Не можна видалити власний обліковий запис.', 'error')
+        return redirect(url_for('admin.users'))
+    models.delete_user(user_id)
+    flash('Користувача видалено.', 'success')
+    return redirect(url_for('admin.users'))
