@@ -16,6 +16,7 @@
 """
 import sqlite3
 from datetime import datetime
+from datetime import date
 
 from flask import current_app, g
 
@@ -35,6 +36,9 @@ SORT_OPTIONS = {
     'price_desc': ('Ціна: від дорожчих', 'price DESC'),
     'name': ('За назвою (А-Я)', 'brand ASC, name ASC'),
 }
+
+# Статуси заявки на тест-драйв.
+TEST_DRIVE_STATUSES = ['Нова', 'Підтверджена', 'Проведена', 'Скасована']
 
 SCHEMA = """
 -- Відгуки з форми «Зворотний зв'язок»
@@ -87,6 +91,21 @@ CREATE TABLE IF NOT EXISTS order_items (
     unit_price REAL    NOT NULL,
     FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE,
     FOREIGN KEY (car_id)   REFERENCES cars (id)   ON DELETE RESTRICT
+);
+
+-- Заявки на тест-драйв (додаткова таблиця, Рівень 2).
+-- Зв'язок «один-до-багатьох»: одне авто — багато заявок.
+CREATE TABLE IF NOT EXISTS test_drives (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    car_id         INTEGER NOT NULL,
+    customer_name  TEXT NOT NULL,
+    phone          TEXT NOT NULL,
+    email          TEXT NOT NULL,
+    preferred_date TEXT NOT NULL,
+    comment        TEXT,
+    status         TEXT NOT NULL,
+    created_at     TEXT NOT NULL,
+    FOREIGN KEY (car_id) REFERENCES cars (id) ON DELETE CASCADE
 );
 """
 
@@ -259,3 +278,132 @@ def create_order(customer_name, email, phone, comment, cart):
             [(order_id, car['id'], cart[car['id']], car['price']) for car in cars],
         )
     return order_id
+
+
+# -------------------------------------------- автомобілі: керування в адмінці
+
+def add_car(data):
+    """CREATE: data — словник з полями форми (див. routes/admin.py)."""
+    db = get_db()
+    with db:
+        cur = db.execute(
+            'INSERT INTO cars (brand, name, body_type, fuel, transmission, year, price, image, description) '
+            'VALUES (:brand, :name, :body_type, :fuel, :transmission, :year, :price, :image, :description)',
+            data,
+        )
+    return cur.lastrowid
+
+
+def update_car(car_id, data):
+    """UPDATE: оновлює всі поля авто."""
+    db = get_db()
+    with db:
+        db.execute(
+            'UPDATE cars SET brand = :brand, name = :name, body_type = :body_type, fuel = :fuel, '
+            'transmission = :transmission, year = :year, price = :price, image = :image, '
+            'description = :description WHERE id = :id',
+            {**data, 'id': car_id},
+        )
+
+
+def delete_car(car_id):
+    """DELETE: якщо авто є в замовленні, SQLite кине sqlite3.IntegrityError
+    (ON DELETE RESTRICT). Заявки на тест-драйв видаляться автоматично (CASCADE)."""
+    db = get_db()
+    with db:
+        db.execute('DELETE FROM cars WHERE id = ?', (car_id,))
+
+
+def get_latest_cars(limit=3):
+    """Найновіші авто для блоку «Популярне в каталозі» на головній."""
+    return get_db().execute('SELECT * FROM cars ORDER BY year DESC, id DESC LIMIT ?', (limit,)).fetchall()
+
+
+# ---------------------------------------------- замовлення: керування в адмінці
+
+def get_orders(status=''):
+    """Список замовлень (можна відфільтрувати за статусом) з кількістю авто в кожному."""
+    sql = ('SELECT o.*, COALESCE(SUM(oi.quantity), 0) AS items_count '
+           'FROM orders o LEFT JOIN order_items oi ON oi.order_id = o.id')
+    params = []
+    if status:
+        sql += ' WHERE o.status = ?'
+        params.append(status)
+    sql += ' GROUP BY o.id ORDER BY o.id DESC'
+    return get_db().execute(sql, params).fetchall()
+
+
+def get_order_details(order_id):
+    """Замовлення та його позиції (JOIN order_items з cars)."""
+    db = get_db()
+    order = db.execute('SELECT * FROM orders WHERE id = ?', (order_id,)).fetchone()
+    items = db.execute(
+        'SELECT c.id AS car_id, c.brand, c.name, c.image, oi.quantity, oi.unit_price, '
+        '       oi.quantity * oi.unit_price AS subtotal '
+        'FROM order_items oi JOIN cars c ON oi.car_id = c.id '
+        'WHERE oi.order_id = ? ORDER BY oi.id',
+        (order_id,),
+    ).fetchall()
+    return order, items
+
+
+def update_order_status(order_id, status):
+    if status not in ORDER_STATUSES:
+        raise ValueError(f'Невідомий статус: {status}')
+    db = get_db()
+    with db:
+        db.execute('UPDATE orders SET status = ? WHERE id = ?', (status, order_id))
+
+
+def delete_order(order_id):
+    """Позиції замовлення видаляє сама база (ON DELETE CASCADE)."""
+    db = get_db()
+    with db:
+        db.execute('DELETE FROM orders WHERE id = ?', (order_id,))
+
+
+# ----------------------------------------------------- тест-драйви (Рівень 2)
+
+def add_test_drive(car_id, customer_name, phone, email, preferred_date, comment):
+    """CREATE: нова заявка на тест-драйв."""
+    db = get_db()
+    with db:
+        cur = db.execute(
+            'INSERT INTO test_drives (car_id, customer_name, phone, email, preferred_date, comment, status, created_at) '
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            (car_id, customer_name, phone, email, preferred_date, comment, TEST_DRIVE_STATUSES[0], now()),
+        )
+    return cur.lastrowid
+
+
+def get_test_drives(status=''):
+    """READ: заявки разом із назвою авто (JOIN з cars)."""
+    sql = ('SELECT td.*, c.brand, c.name AS car_name '
+           'FROM test_drives td JOIN cars c ON td.car_id = c.id')
+    params = []
+    if status:
+        sql += ' WHERE td.status = ?'
+        params.append(status)
+    sql += ' ORDER BY td.preferred_date ASC, td.id DESC'
+    return get_db().execute(sql, params).fetchall()
+
+
+def update_test_drive_status(test_drive_id, status):
+    """UPDATE: змінює статус заявки."""
+    if status not in TEST_DRIVE_STATUSES:
+        raise ValueError(f'Невідомий статус: {status}')
+    db = get_db()
+    with db:
+        db.execute('UPDATE test_drives SET status = ? WHERE id = ?', (status, test_drive_id))
+
+
+def delete_test_drive(test_drive_id):
+    """DELETE: видаляє заявку."""
+    db = get_db()
+    with db:
+        db.execute('DELETE FROM test_drives WHERE id = ?', (test_drive_id,))
+
+
+def today():
+    """Сьогоднішня дата рядком 2026-11-16 (для перевірки дати тест-драйву)."""
+    return date.today().isoformat()

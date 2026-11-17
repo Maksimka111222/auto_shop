@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% from "_macros.html" import admin_nav, status_badge %}
+
+{% block title %}Замовлення №{{ order['id'] }} — адмін-панель{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-4">Адмін-панель</h1>
+{{ admin_nav('orders') }}
+
+<a href="{{ url_for('admin.orders') }}" class="text-zinc-600 hover:text-red-600">← Усі замовлення</a>
+<h2 class="text-2xl font-bold mt-2 mb-4">Замовлення №{{ order['id'] }} {{ status_badge(order['status']) }}</h2>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <section class="bg-white rounded-xl shadow p-6">
+        <h3 class="font-bold text-lg mb-3">Клієнт</h3>
+        <p><span class="text-zinc-500">Ім'я:</span> {{ order['customer_name'] }}</p>
+        <p><span class="text-zinc-500">Email:</span> {{ order['email'] }}</p>
+        <p><span class="text-zinc-500">Телефон:</span> {{ order['phone'] }}</p>
+        <p><span class="text-zinc-500">Дата:</span> {{ order['created_at'] }}</p>
+        {% if order['comment'] %}<p class="mt-2"><span class="text-zinc-500">Коментар:</span> {{ order['comment'] }}</p>{% endif %}
+
+        <!-- Зміна статусу замовлення -->
+        <form action="{{ url_for('admin.order_status', order_id=order['id']) }}" method="post" class="mt-5 flex gap-2">
+            <select name="status" aria-label="Статус" class="flex-1 rounded-lg border border-zinc-300 px-3 py-2 bg-white">
+                {% for status in statuses %}
+                <option {{ 'selected' if status == order['status'] }}>{{ status }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="rounded-lg bg-zinc-900 px-4 py-2 font-semibold text-white hover:bg-red-600 cursor-pointer">Зберегти</button>
+        </form>
+    </section>
+
+    <!-- Позиції замовлення: JOIN order_items + cars -->
+    <section class="lg:col-span-2 bg-white rounded-xl shadow overflow-x-auto">
+        <table class="min-w-full text-left">
+            <thead class="bg-zinc-100 text-xs uppercase tracking-wider text-zinc-500">
+                <tr>
+                    <th class="px-4 py-3">Авто</th>
+                    <th class="px-4 py-3">Ціна на момент замовлення</th>
+                    <th class="px-4 py-3">К-сть</th>
+                    <th class="px-4 py-3">Сума</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-zinc-200">
+                {% for item in items %}
+                <tr>
+                    <td class="px-4 py-3 font-semibold whitespace-nowrap">{{ item['brand'] }} {{ item['name'] }}</td>
+                    <td class="px-4 py-3">{{ item['unit_price']|money }}</td>
+                    <td class="px-4 py-3">{{ item['quantity'] }}</td>
+                    <td class="px-4 py-3 font-semibold">{{ item['subtotal']|money }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="bg-zinc-50">
+                    <td colspan="3" class="px-4 py-3 text-right font-semibold">Разом:</td>
+                    <td class="px-4 py-3 text-lg font-extrabold">{{ order['total_price']|money }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </section>
+</div>
+{% endblock %}

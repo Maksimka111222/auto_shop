@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% from "_macros.html" import admin_nav, status_badge %}
+
+{% block title %}Замовлення — адмін-панель{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-4">Адмін-панель</h1>
+{{ admin_nav('orders') }}
+
+<div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <h2 class="text-2xl font-bold">Замовлення <span class="text-zinc-400">({{ orders|length }})</span></h2>
+    <!-- Фільтр за статусом: GET-параметр ?status=... -->
+    <form method="get" class="flex items-center gap-2">
+        <label for="status" class="text-sm text-zinc-600">Статус</label>
+        <select id="status" name="status" onchange="this.form.submit()" class="rounded-lg border border-zinc-300 px-3 py-1.5 bg-white">
+            <option value="">Усі</option>
+            {% for status in statuses %}
+            <option {{ 'selected' if status == current_status }}>{{ status }}</option>
+            {% endfor %}
+        </select>
+        <noscript><button type="submit">OK</button></noscript>
+    </form>
+</div>
+
+{% if orders %}
+<div class="overflow-x-auto bg-white rounded-xl shadow">
+    <table class="min-w-full text-left">
+        <thead class="bg-zinc-100 text-xs uppercase tracking-wider text-zinc-500">
+            <tr>
+                <th class="px-4 py-3">№</th>
+                <th class="px-4 py-3">Клієнт</th>
+                <th class="px-4 py-3">Контакти</th>
+                <th class="px-4 py-3">Авто, шт.</th>
+                <th class="px-4 py-3">Сума</th>
+                <th class="px-4 py-3">Статус</th>
+                <th class="px-4 py-3">Дата</th>
+                <th class="px-4 py-3">Дії</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-200">
+            {% for order in orders %}
+            <tr class="hover:bg-zinc-50">
+                <td class="px-4 py-3">{{ order['id'] }}</td>
+                <td class="px-4 py-3 whitespace-nowrap font-semibold">{{ order['customer_name'] }}</td>
+                <td class="px-4 py-3 text-sm whitespace-nowrap">{{ order['email'] }}<br>{{ order['phone'] }}</td>
+                <td class="px-4 py-3">{{ order['items_count'] }}</td>
+                <td class="px-4 py-3 whitespace-nowrap font-semibold">{{ order['total_price']|money }}</td>
+                <td class="px-4 py-3">{{ status_badge(order['status']) }}</td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-zinc-500">{{ order['created_at'] }}</td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <a href="{{ url_for('admin.order_details', order_id=order['id']) }}" class="mr-3 font-semibold text-zinc-700 underline">Деталі</a>
+                    <form action="{{ url_for('admin.order_delete', order_id=order['id']) }}" method="post" class="inline"
+                          onsubmit="return confirm('Видалити замовлення №{{ order['id'] }}?')">
+                        <button type="submit" class="font-semibold text-red-600 hover:text-red-800 cursor-pointer">Видалити</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="bg-white rounded-xl shadow p-6 text-zinc-600">Замовлень {{ 'з таким статусом ' if current_status }}немає.</p>
+{% endif %}
+{% endblock %}

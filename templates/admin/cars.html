@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_macros.html" import admin_nav %}
+
+{% block title %}Автомобілі — адмін-панель{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-4">Адмін-панель</h1>
+{{ admin_nav('cars') }}
+
+<div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <h2 class="text-2xl font-bold">Автомобілі <span class="text-zinc-400">({{ cars|length }})</span></h2>
+    <a href="{{ url_for('admin.car_new') }}" class="rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700">+ Додати авто</a>
+</div>
+
+{% if cars %}
+<div class="overflow-x-auto bg-white rounded-xl shadow">
+    <table class="min-w-full text-left">
+        <thead class="bg-zinc-100 text-xs uppercase tracking-wider text-zinc-500">
+            <tr>
+                <th class="px-4 py-3">Фото</th>
+                <th class="px-4 py-3">Авто</th>
+                <th class="px-4 py-3">Характеристики</th>
+                <th class="px-4 py-3">Ціна</th>
+                <th class="px-4 py-3">Дії</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-zinc-200">
+            {% for car in cars %}
+            <tr class="hover:bg-zinc-50">
+                <td class="px-4 py-3"><img src="{{ car['image']|car_image }}" alt="" class="h-12 w-20 rounded object-cover"></td>
+                <td class="px-4 py-3 font-semibold whitespace-nowrap">{{ car['brand'] }} {{ car['name'] }}</td>
+                <td class="px-4 py-3 text-sm text-zinc-600 whitespace-nowrap">{{ car['year'] }} • {{ car['body_type'] }} • {{ car['fuel'] }} • {{ car['transmission'] }}</td>
+                <td class="px-4 py-3 font-semibold whitespace-nowrap">{{ car['price']|money }}</td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <a href="{{ url_for('admin.car_edit', car_id=car['id']) }}" class="mr-3 font-semibold text-zinc-700 underline">Редагувати</a>
+                    <form action="{{ url_for('admin.car_delete', car_id=car['id']) }}" method="post" class="inline"
+                          onsubmit="return confirm('Видалити {{ car['brand'] }} {{ car['name'] }}?')">
+                        <button type="submit" class="font-semibold text-red-600 hover:text-red-800 cursor-pointer">Видалити</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="bg-white rounded-xl shadow p-6 text-zinc-600">Автомобілів поки немає.</p>
+{% endif %}
+{% endblock %}
