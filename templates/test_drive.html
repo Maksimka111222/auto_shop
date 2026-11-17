@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Тест-драйв{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('shop.shop') }}" class="text-zinc-600 hover:text-red-600">← До каталогу</a>
+<h1 class="text-3xl font-bold mt-2 mb-6">Запис на тест-драйв</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <!-- Обране авто -->
+    <article class="bg-white rounded-xl shadow overflow-hidden h-fit">
+        <img src="{{ car['image']|car_image }}" alt="{{ car['brand'] }} {{ car['name'] }}" class="w-full h-56 object-cover">
+        <div class="p-5">
+            <h2 class="text-xl font-bold">{{ car['brand'] }} {{ car['name'] }}</h2>
+            <p class="text-sm text-zinc-500 mb-2">{{ car['year'] }} • {{ car['body_type']|lower }} • {{ car['fuel']|lower }} • {{ car['transmission']|lower }}</p>
+            <p class="text-2xl font-extrabold">{{ car['price']|money }}</p>
+        </div>
+    </article>
+
+    <!-- Форма заявки: дані зберігаються в таблиці test_drives -->
+    <section class="bg-white rounded-xl shadow p-6">
+        <form action="{{ url_for('test_drive.book', car_id=car['id']) }}" method="post" class="space-y-4">
+            <div>
+                <label for="customer_name" class="block font-semibold mb-1">Ім'я</label>
+                <input id="customer_name" name="customer_name" required value="{{ form['customer_name'] }}" autocomplete="name"
+                       class="w-full rounded-lg border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+            </div>
+            <div>
+                <label for="phone" class="block font-semibold mb-1">Телефон</label>
+                <input id="phone" name="phone" type="tel" required value="{{ form['phone'] }}" placeholder="+380 67 123 45 67" autocomplete="tel"
+                       class="w-full rounded-lg border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+            </div>
+            <div>
+                <label for="email" class="block font-semibold mb-1">Email</label>
+                <input id="email" name="email" type="email" required value="{{ form['email'] }}" autocomplete="email"
+                       class="w-full rounded-lg border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+            </div>
+            <div>
+                <label for="preferred_date" class="block font-semibold mb-1">Бажана дата</label>
+                <!-- min не дає обрати минулу дату в календарі; на сервері це теж перевіряється -->
+                <input id="preferred_date" name="preferred_date" type="date" required min="{{ min_date }}" value="{{ form['preferred_date'] }}"
+                       class="w-full rounded-lg border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">
+            </div>
+            <div>
+                <label for="comment" class="block font-semibold mb-1">Коментар (необов'язково)</label>
+                <textarea id="comment" name="comment" rows="3" maxlength="500" placeholder="Наприклад: зручно після 15:00"
+                          class="w-full rounded-lg border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500">{{ form['comment'] }}</textarea>
+            </div>
+            <button type="submit" class="rounded-lg bg-red-600 px-6 py-2 font-semibold text-white hover:bg-red-700 transition-colors duration-300 cursor-pointer">
+                Записатися
+            </button>
+        </form>
+    </section>
+</div>
+{% endblock %}

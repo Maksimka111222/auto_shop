@@ -51,6 +51,8 @@ def seed():
                         'Цікавить кредит', {cars[0]['id']: 1})
     models.add_feedback('Тестовий користувач', 'user@example.com',
                         'Підкажіть, будь ласка, чи є Škoda Octavia з автоматом?')
+    models.add_test_drive(cars[1]['id'], 'Олена Коваль', '+380 50 765 43 21', 'olena@example.com',
+                          models.today(), 'Зручно після 15:00')
     print('Додано тестове замовлення та відгук.')
 
 

@@ -39,7 +39,7 @@
 <section class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
     <div class="bg-white rounded-xl shadow p-6 border-t-4 border-red-600">
         <h3 class="text-xl font-bold mb-2">Різні класи авто</h3>
-        <p>Хетчбеки, ліфтбеки й седани — для міста, сім'ї та далеких поїздок.</p>
+        <p>Хетчбеки, седани, кросовери, гібриди та електромобілі — для міста, сім'ї та далеких поїздок.</p>
     </div>
     <div class="bg-white rounded-xl shadow p-6 border-t-4 border-red-600">
         <h3 class="text-xl font-bold mb-2">Зрозумілий опис</h3>
@@ -54,20 +54,22 @@
 <!-- Короткий анонс асортименту -->
 <section class="mt-12">
     <h2 class="text-2xl font-bold mb-4">Популярне в каталозі</h2>
+    <!-- Три найновіші авто беруться з бази даних (models.get_latest_cars) -->
+    {% if cars %}
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        {% for car in cars %}
         <figure class="bg-white rounded-xl shadow overflow-hidden">
-            <img src="{{ url_for('static', filename='img/bmw-3.jpg') }}" alt="BMW 3 Series" class="w-full h-44 object-cover">
-            <figcaption class="p-4 font-semibold">BMW 3 Series</figcaption>
+            <img src="{{ car['image']|car_image }}" alt="{{ car['brand'] }} {{ car['name'] }}" class="w-full h-44 object-cover">
+            <figcaption class="p-4">
+                <span class="font-semibold">{{ car['brand'] }} {{ car['name'] }}</span>
+                <span class="block text-sm text-zinc-500">{{ car['year'] }} • {{ car['price']|money }}</span>
+            </figcaption>
         </figure>
-        <figure class="bg-white rounded-xl shadow overflow-hidden">
-            <img src="{{ url_for('static', filename='img/vw-golf.jpg') }}" alt="Volkswagen Golf" class="w-full h-44 object-cover">
-            <figcaption class="p-4 font-semibold">Volkswagen Golf</figcaption>
-        </figure>
-        <figure class="bg-white rounded-xl shadow overflow-hidden">
-            <img src="{{ url_for('static', filename='img/skoda-octavia.jpg') }}" alt="Škoda Octavia" class="w-full h-44 object-cover">
-            <figcaption class="p-4 font-semibold">Škoda Octavia</figcaption>
-        </figure>
+        {% endfor %}
     </div>
+    {% else %}
+    <p class="text-zinc-600">Каталог поки порожній.</p>
+    {% endif %}
     <p class="mt-4 text-zinc-600">
         Увесь асортимент — на сторінці
         <a href="{{ url_for('shop.shop') }}" class="text-red-600 font-semibold underline">«Магазин»</a>.

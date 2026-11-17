@@ -10,7 +10,7 @@ from datetime import datetime
 from flask import Flask, render_template, session, url_for
 
 import models
-from routes import admin_bp, feedback_bp, shop_bp
+from routes import admin_bp, feedback_bp, shop_bp, test_drive_bp
 
 app = Flask(__name__)
 
@@ -34,6 +34,7 @@ with app.app_context():
 app.register_blueprint(feedback_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(shop_bp)
+app.register_blueprint(test_drive_bp)
 
 
 @app.template_filter('money')
@@ -64,7 +65,8 @@ def inject_globals():
 
 @app.route('/')
 def home():
-    return render_template('home.html')
+    # Блок «Популярне в каталозі» тепер наповнюється з БД
+    return render_template('home.html', cars=models.get_latest_cars(3))
 
 
 @app.route('/about')
