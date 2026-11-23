@@ -68,7 +68,8 @@ CREATE TABLE IF NOT EXISTS cars (
     year         INTEGER NOT NULL CHECK (year BETWEEN 1950 AND 2100),
     price        REAL    NOT NULL CHECK (price >= 0),
     image        TEXT,
-    description  TEXT
+    description  TEXT,
+    in_stock     INTEGER NOT NULL DEFAULT 1 CHECK (in_stock IN (0, 1))
 );
 
 -- Замовлення (шапка): хто замовив, загальна сума, статус
@@ -132,6 +133,7 @@ CREATE TABLE IF NOT EXISTS users (
 MIGRATIONS = [
     ('orders', 'user_id', 'INTEGER REFERENCES users (id) ON DELETE SET NULL'),
     ('test_drives', 'user_id', 'INTEGER REFERENCES users (id) ON DELETE SET NULL'),
+    ('cars', 'in_stock', 'INTEGER NOT NULL DEFAULT 1 CHECK (in_stock IN (0, 1))'),
 ]
 
 
@@ -515,3 +517,38 @@ def get_user_test_drives(user_id):
         'JOIN cars c ON c.id = td.car_id WHERE td.user_id = ? ORDER BY td.id DESC',
         (user_id,),
     ).fetchall()
+
+
+# ------------------------------------------------------- REST API (ЛР5)
+
+# Колонки таблиці cars, які дозволено оновлювати через PATCH.
+# Назви колонок підставляються в SQL, тому беруться ЛИШЕ з цього білого списку.
+CAR_PATCH_FIELDS = ('brand', 'name', 'body_type', 'fuel', 'transmission',
+                    'year', 'price', 'image', 'description', 'in_stock')
+
+
+def patch_car(car_id, fields):
+    """PATCH: оновлює лише передані колонки (fields — dict {колонка: значення})."""
+    columns = [column for column in fields if column in CAR_PATCH_FIELDS]
+    if not columns:
+        return
+    set_clause = ', '.join(f'{column} = ?' for column in columns)   # імена з білого списку
+    values = [fields[column] for column in columns] + [car_id]
+    db = get_db()
+    with db:
+        db.execute(f'UPDATE cars SET {set_clause} WHERE id = ?', values)
+
+
+def create_feedback(name, email, message):
+    """Як add_feedback, але повертає id нового відгуку (потрібен для заголовка Location)."""
+    db = get_db()
+    with db:
+        cur = db.execute(
+            'INSERT INTO feedback (name, email, message, created_at) VALUES (?, ?, ?, ?)',
+            (name, email, message, now()),
+        )
+    return cur.lastrowid
+
+
+def get_feedback_item(feedback_id):
+    return get_db().execute('SELECT * FROM feedback WHERE id = ?', (feedback_id,)).fetchone()
