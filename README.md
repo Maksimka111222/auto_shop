@@ -1,149 +1,150 @@
-# MOTOREX — онлайн-автосалон
+# MOTOREX: вебзастосунок автомагазину + REST API
 
-Навчальний вебзастосунок на Flask + SQLite (лабораторна робота №4).
-Команда ІПЗ-22: Хомич Максим, Жук Діана, Сієнко Володимир.
+Навчальний проєкт групи ІПЗ-22 (Flask + SQLite). Лабораторна робота №5: «Розробка RESTful API з документацією» (рівні 1, 2 і 3).
 
-## Можливості
+**Команда:** Хомич Максим Віталійович, Жук Діана Валеріївна, Сієнко Володимир Павлович.
+**Репозиторій:** https://github.com/Maksimka111222/auto_shop
 
-- каталог автомобілів із бази даних, **пошук і фільтри** (марка, кузов, пальне, коробка, ціна, сортування);
-- кошик у сесії та оформлення замовлення (`orders` + `order_items`);
-- форма зворотного зв'язку (`feedback`);
-- **запис на тест-драйв** (`test_drives`, додаткова таблиця);
-- **користувачі з ролями** «адміністратор» і «клієнт», особистий кабінет з історією замовлень (`users`);
-- адмін-панель: відгуки, авто (CRUD), замовлення та їхні статуси, тест-драйви, користувачі.
+## Про проєкт
+
+MOTOREX має два інтерфейси до однієї бази SQLite. Перший — сайт із каталогом, кошиком, адмін-панеллю та особистим кабінетом (ЛР3, ЛР4). Другий — REST API, який віддає ті самі дані у форматі JSON (ЛР5). API підключене окремими Blueprint-ами, тому сайт працює як і раніше.
+
+## Технології
+
+| Що | Навіщо |
+|---|---|
+| Python 3, Flask 3 | вебфреймворк, Blueprint-и |
+| SQLite (`sqlite3`) | база даних з ЛР4 |
+| flasgger | Swagger UI на основі YAML-докстрінгів |
+| Postman | тестування API (`postman_collection.json`) |
+| unittest | автотести (`tests/test_app.py`, `tests/test_api.py`) |
 
 ## Запуск
 
 ```bash
-# macOS / Linux
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python3 seed_data.py      # створює db.sqlite і демонстраційні дані
-python3 app.py            # http://127.0.0.1:5000
-```
-
-```powershell
-# Windows PowerShell
+git clone https://github.com/Maksimka111222/auto_shop.git
+cd auto_shop
 python -m venv .venv
-.venv\Scripts\Activate.ps1
+.venv\Scripts\activate          # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-python seed_data.py
+rm db.sqlite                     # Windows (PowerShell): del db.sqlite
+python seed_data.py              # тестові дані: 9 авто, 2 користувачі, замовлення, відгук
 python app.py
 ```
 
-Демонстраційні облікові записи (лише для навчання):
+- Сайт: http://127.0.0.1:5000/
+- Swagger UI: http://127.0.0.1:5000/apidocs/ (список угорі перемикає v1 і v2)
+- Автотести: `python -m unittest -v`
 
-| Роль | Email | Пароль |
+Якщо при запуску з'являється `ModuleNotFoundError: No module named 'pkg_resources'`, виконайте `pip install "setuptools<82"`.
+
+## Структура API
+
+```text
+app.py                 створення застосунку, Swagger, централізовані обробники помилок
+models.py              робота з БД (ЛР4) + функції для API в кінці файлу
+swagger_config.py      заголовок Swagger і схеми (definitions)
+routes/api_common.py   валідація, ApiError, серіалізація, пагінація
+routes/api_v1.py       /api/v1: базовий CRUD
+routes/api_v2.py       /api/v2: пошук, фільтри, сортування, пагінація
+tests/test_api.py      автотести API
+postman_collection.json
+```
+
+## Ендпоінти
+
+### v1 (`/api/v1`): базовий CRUD
+
+| Метод | URI | Опис | Коди відповідей |
+|---|---|---|---|
+| GET | `/api/v1/cars` | Список усіх авто | 200 |
+| GET | `/api/v1/cars/<id>` | Одне авто | 200, 404 |
+| POST | `/api/v1/cars` | Створити авто | 201 (+Location), 400 |
+| PUT | `/api/v1/cars/<id>` | Повністю замінити авто | 200, 400, 404 |
+| PATCH | `/api/v1/cars/<id>` | Частково оновити (наприклад, ціну, наявність) | 200, 400, 404 |
+| DELETE | `/api/v1/cars/<id>` | Видалити авто | 204, 404, 409 |
+| GET | `/api/v1/orders` | Замовлення з позиціями (`?status=`) | 200, 400 |
+| GET | `/api/v1/orders/<id>` | Одне замовлення | 200, 404 |
+| POST | `/api/v1/orders` | Створити замовлення | 201 (+Location), 400, 409 |
+| PATCH | `/api/v1/orders/<id>/status` | Змінити статус | 200, 400, 404 |
+| GET | `/api/v1/feedback` | Список відгуків | 200 |
+| GET | `/api/v1/feedback/<id>` | Один відгук | 200, 404 |
+| POST | `/api/v1/feedback` | Залишити відгук | 201 (+Location), 400 |
+
+### v2 (`/api/v2`): розширене читання
+
+| Метод | URI | Опис | Коди відповідей |
+|---|---|---|---|
+| GET | `/api/v2/cars` | Пошук `q`, фільтри, `sort`, пагінація | 200, 400 |
+| GET | `/api/v2/cars/<id>` | Одне авто з `links.self` | 200, 404 |
+| GET | `/api/v2/orders` | Замовлення: `status`, пагінація | 200, 400 |
+| GET | `/api/v2/orders/<id>` | Одне замовлення з `links.self` | 200, 404 |
+| GET | `/api/v2/feedback` | Відгуки: `is_processed`, пагінація | 200, 400 |
+
+Недозволений метод на існуючій адресі повертає 405, будь-яка неіснуюча адреса під `/api/` повертає 404. Обидва випадки у форматі JSON.
+
+## Відмінності v1 і v2
+
+| | v1 | v2 |
 |---|---|---|
-| Адміністратор | admin@motorex.ua | admin123 |
-| Клієнт | client@motorex.ua | client123 |
+| Формат списку | масив `[...]` | об'єкт `{"items": [...], "total": 9, "page": 1, "per_page": 10, "pages": 1}` |
+| Пошук і фільтри | немає | `q`, `brand`, `body_type`, `fuel`, `transmission`, `price_min`, `price_max`, `in_stock` |
+| Сортування | за замовчуванням | `sort=new / price_asc / price_desc / name` |
+| Пагінація | немає | `page` (від 1), `per_page` (1-50, за замовчуванням 10) |
+| Посилання | немає | `links.self` у кожному об'єкті |
+| Запис (POST, PUT, PATCH, DELETE) | є | немає, використовується v1 |
 
-Почати з чистої бази: видалити файл `db.sqlite` і знову виконати `seed_data.py`.
+Формат відповіді списку змінився несумісно, тому це окрема версія. Клієнти v1 продовжують працювати без змін.
 
-Автоматичні тести: `python3 -m unittest -v` (Windows: `python -m unittest -v`).
+## Формат помилок і валідація
 
-## Структура проєкту
+Усі помилки на `/api/...` повертаються як JSON, а не HTML:
 
-```
-app.py              — створення застосунку, Blueprint-и, фільтри money і car_image
-models.py           — схема БД і всі SQL-запити (CRUD)
-init_db.py          — створення таблиць
-seed_data.py        — демонстраційні дані
-routes/
-  feedback.py       — /contact (форма відгуку)
-  shop.py           — /shop (пошук і фільтри), /cart, /checkout
-  test_drive.py     — /test-drive/<id>
-  auth.py           — /register, /login, /logout, /account
-  admin.py          — /admin/... (тільки для ролі admin)
-templates/          — Jinja-шаблони (admin/, auth/ — окремі розділи)
-static/img/         — фото авто (джерела в CREDITS.md)
-tests/test_app.py   — автоматичні тести
+```json
+{
+  "error": "Помилка валідації",
+  "status_code": 400,
+  "details": [
+    {"field": "price", "message": "обов'язкове поле"}
+  ]
+}
 ```
 
-## Схема бази даних
+Валідація (`routes/api_common.py`) працює так:
 
-```mermaid
-erDiagram
-    users ||--o{ orders : "оформлює"
-    users ||--o{ test_drives : "подає"
-    orders ||--|{ order_items : "містить"
-    cars ||--o{ order_items : "входить у"
-    cars ||--o{ test_drives : "бронюється"
+1. `request.get_json(silent=True)` повертає `None`, якщо Content-Type не JSON або JSON зламаний. Тоді відповідь 400. Тіло має бути JSON-об'єктом.
+2. Перевіряються обов'язкові поля й типи (`str`, `int`, `float`). `true` і `false` не приймаються як числа.
+3. Невідомі поля відхиляються (суворий режим).
+4. Ціна має бути більшою за 0, рік від 1950 до 2100, кількість у замовленні від 1 до 5, а марка, модель та ім'я не порожні.
+5. Тип кузова, пальне, коробка й статус замовлення мають бути зі списків у `models.py`.
+6. Усі знайдені помилки повертаються одразу списком `details`, а не по одній.
+7. У замовленні кожне авто має існувати (інакше 400) і бути в наявності (інакше 409). Ціни беруться з БД, а не з запиту.
 
-    feedback {
-        INTEGER id PK
-        TEXT name
-        TEXT email
-        TEXT message
-        INTEGER is_processed
-        TEXT created_at
-    }
-    cars {
-        INTEGER id PK
-        TEXT brand
-        TEXT name
-        TEXT body_type
-        TEXT fuel
-        TEXT transmission
-        INTEGER year
-        REAL price
-        TEXT image
-        TEXT description
-    }
-    orders {
-        INTEGER id PK
-        TEXT customer_name
-        TEXT email
-        TEXT phone
-        TEXT comment
-        REAL total_price
-        TEXT status
-        TEXT created_at
-        INTEGER user_id FK
-    }
-    order_items {
-        INTEGER id PK
-        INTEGER order_id FK
-        INTEGER car_id FK
-        INTEGER quantity
-        REAL unit_price
-    }
-    test_drives {
-        INTEGER id PK
-        INTEGER car_id FK
-        TEXT customer_name
-        TEXT phone
-        TEXT email
-        TEXT preferred_date
-        TEXT comment
-        TEXT status
-        TEXT created_at
-        INTEGER user_id FK
-    }
-    users {
-        INTEGER id PK
-        TEXT name
-        TEXT email UK
-        TEXT password_hash
-        TEXT role
-        TEXT created_at
-    }
-```
+Єдина точка обробки помилок знаходиться в `app.py`: власний виняток `ApiError`, обробники 400, 403, 404, 405, 500 та загальний обробник `Exception`. Для адрес поза `/api/` сайт, як і раніше, показує HTML-сторінки.
 
-Правила зв'язків:
+Поле `in_stock` (наявність) додано в таблицю `cars` міграцією з `DEFAULT 1`, тому наявні дані й сайт не ламаються.
 
-- `order_items.order_id → orders.id` — **ON DELETE CASCADE** (видалили замовлення — зникли його позиції);
-- `order_items.car_id → cars.id` — **ON DELETE RESTRICT** (не можна видалити авто, яке вже є в замовленні);
-- `test_drives.car_id → cars.id` — **ON DELETE CASCADE**;
-- `orders.user_id`, `test_drives.user_id → users.id` — **ON DELETE SET NULL** (історія лишається).
+## Тестування
 
-`orders` ↔ `cars` — зв'язок «багато-до-багатьох» через проміжну таблицю `order_items`.
+**Postman.** Імпортуйте `postman_collection.json` (Bruno теж уміє імпортувати колекції Postman). Папки: `API v1 - Products`, `API v1 - Orders & Feedback`, `API v2 - Search & Pagination`, `Negative Tests - Errors 400 & 404`. Для запуску на чистій базі натисніть Run collection і залиште порядок за замовчуванням: деякі запити використовують `{{created_car_id}}` і `{{created_order_id}}` з попередніх.
 
-## Безпека
+**Автотести.** `python -m unittest -v` виконує і тести ЛР4, і тести API.
 
-- усі SQL-запити параметризовані (`?`), сортування — лише з білого списку;
-- паролі зберігаються як хеш (`werkzeug.security`);
-- дії, що змінюють дані, виконуються тільки POST-запитами; після POST — redirect (PRG);
-- адмін-панель перевіряє роль у `before_request`; клієнт отримує 403;
-- ціни для замовлення беруться з БД, а не з браузера.
+### Скріншоти
+
+![Postman: успішний запит](lab-reports/image/lab05/postman-success.png)
+![Postman: запит з помилкою 400/404](lab-reports/image/lab05/postman-error.png)
+![Postman: Collection Runner](lab-reports/image/lab05/postman-runner.png)
+![Swagger UI: /apidocs/](lab-reports/image/lab05/swagger.png)
+
+## Обмеження
+
+- Запис через API не захищений автентифікацією (для навчальної роботи). У реальному проєкті потрібні токени або сесії та перевірка ролі admin.
+- Пагінація виконується в пам'яті після вибірки з БД. Для великих таблиць її слід переносити в SQL (`LIMIT`/`OFFSET`).
+- Немає обмеження кількості запитів (rate limiting).
+
+## Висновки
+
+У роботі ми додали до сайту REST API з двома версіями, 13 ендпоінтами в v1 і 5 у v2. Усі відповіді, включно з помилками, повертаються в JSON, а коди статусу відповідають операціям (200, 201, 204, 400, 404, 405, 409, 500). Валідація й обробка помилок винесені в одне місце, тому поведінка однакова для всіх ендпоінтів. Swagger UI документує обидві версії й дозволяє перевіряти запити в браузері. Колекція Postman і автотести фіксують очікувану поведінку. Окрема версія v2 показала, навіщо потрібне версіонування: змінений формат списку не зламав клієнтів v1.
+
+Під час виконання лабораторної роботи використовувався ШІ-асистент.
