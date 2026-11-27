@@ -143,6 +143,10 @@ def home():
 def about():
     return render_template('about.html')
 
+@app.route('/api-demo')
+def api_demo():
+    return render_template('api-demo.html')
+
 
 if __name__ == '__main__':
     # debug=True: автоматичний перезапуск після змін і детальні помилки.

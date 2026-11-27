@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Демонстрація API{% endblock %}
+
+{% block content %}
+<h1 class="text-3xl font-bold mb-2">Демонстрація роботи API</h1>
+<p class="text-zinc-600 mb-6">Відгуки покупців: список і форма працюють через <code>fetch()</code> та
+    REST API (<code>/api/v1/feedback</code>) без перезавантаження сторінки.</p>
+
+<div id="message" class="hidden" role="alert" aria-live="polite"></div>
+<div id="loading" class="hidden mb-4 flex items-center gap-2 text-zinc-500">
+    <span class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-red-600"></span>
+    ⏳ Завантаження...
+</div>
+
+<div class="grid gap-8 lg:grid-cols-2">
+    <section class="rounded-xl bg-white p-6 shadow">
+        <h2 class="text-xl font-semibold mb-4">Залишити відгук</h2>
+        <form id="addForm" novalidate class="space-y-4">
+            <div>
+                <label for="nameInput" class="block text-sm font-medium mb-1">Ім'я</label>
+                <input id="nameInput" name="name" type="text" placeholder="Ваше ім'я"
+                       class="w-full rounded-lg border border-zinc-300 px-3 py-2">
+                <p data-error-for="name" class="mt-1 text-sm text-red-600"></p>
+            </div>
+            <div>
+                <label for="emailInput" class="block text-sm font-medium mb-1">Email</label>
+                <input id="emailInput" name="email" type="email" placeholder="name@example.com"
+                       class="w-full rounded-lg border border-zinc-300 px-3 py-2">
+                <p data-error-for="email" class="mt-1 text-sm text-red-600"></p>
+            </div>
+            <div>
+                <label for="messageInput" class="block text-sm font-medium mb-1">Повідомлення</label>
+                <textarea id="messageInput" name="message" rows="4" placeholder="Мінімум 5 символів"
+                          class="w-full rounded-lg border border-zinc-300 px-3 py-2"></textarea>
+                <p data-error-for="message" class="mt-1 text-sm text-red-600"></p>
+            </div>
+            <button id="submitButton" type="submit"
+                    class="rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700
+                           disabled:opacity-50 cursor-pointer">
+                Додати
+            </button>
+        </form>
+    </section>
+
+    <section class="rounded-xl bg-white p-6 shadow">
+        <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-xl font-semibold">Відгуки (<span id="itemsCount">0</span>)</h2>
+            <button id="reloadButton" type="button"
+                    class="text-sm text-red-600 hover:underline cursor-pointer">Оновити</button>
+        </div>
+        <div id="dataList" class="space-y-3"></div>
+    </section>
+</div>
+
+<script src="{{ url_for('static', filename='js/api-demo.js') }}"></script>
+{% endblock %}
